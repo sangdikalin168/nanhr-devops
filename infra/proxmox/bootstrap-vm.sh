@@ -5,7 +5,9 @@ set -euo pipefail
 
 : "${RUNNER_URL:?set RUNNER_URL}"; : "${RUNNER_TOKEN:?set RUNNER_TOKEN}"
 APP_DIR=/opt/nanhr
-RUNNER_VERSION=2.321.0
+# GitHub rejects old runners, so always fetch the latest release.
+RELEASE_JSON="$(curl -fsSL https://api.github.com/repos/actions/runner/releases/latest)"
+RUNNER_VERSION="$(sed -nE 's/.*"tag_name": *"v([^"]+)".*/\1/p' <<<"$RELEASE_JSON")"
 
 apt-get update
 apt-get install -y ca-certificates curl git unzip qemu-guest-agent
