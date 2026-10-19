@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # Pull a new image tag, restart the stack, verify health; roll back on failure.
 # Usage: scripts/deploy.sh <image-tag>
+# COMPOSE_PROFILES defaults to "prod" (adds cloudflared + uptime-kuma).
 set -euo pipefail
 
 NEW_TAG="${1:?usage: deploy.sh <image-tag>}"
@@ -8,9 +9,10 @@ cd "$(dirname "$0")/../deploy"
 
 ENV_FILE=.env
 HTTP_PORT="$(grep -E '^HTTP_PORT=' "$ENV_FILE" | cut -d= -f2)"
-COMPOSE="docker compose --env-file $ENV_FILE --profile prod"
 PREV_TAG="$(grep -E '^IMAGE_TAG=' "$ENV_FILE" | cut -d= -f2)"
+export COMPOSE_PROFILES="${COMPOSE_PROFILES-prod}"
 
+compose() { docker compose --env-file "$ENV_FILE" "$@"; }
 set_tag() { sed -i "s/^IMAGE_TAG=.*/IMAGE_TAG=$1/" "$ENV_FILE"; }
 
 healthy() {
@@ -24,18 +26,24 @@ healthy() {
   return 1
 }
 
-echo "Deploying $NEW_TAG (previous: $PREV_TAG)"
-set_tag "$NEW_TAG"
-$COMPOSE pull
-$COMPOSE up -d --remove-orphans
+release() {
+  set_tag "$1"
+  compose pull --quiet &&
+    compose up -d --remove-orphans &&
+    healthy
+}
 
-if healthy; then
+echo "Deploying $NEW_TAG (previous: $PREV_TAG)"
+if release "$NEW_TAG"; then
   echo "Deploy OK: $NEW_TAG"
   docker image prune -f >/dev/null
-else
-  echo "Health check failed, rolling back to $PREV_TAG" >&2
-  set_tag "$PREV_TAG"
-  $COMPOSE pull
-  $COMPOSE up -d --remove-orphans
-  exit 1
+  exit 0
 fi
+
+echo "Deploy of $NEW_TAG failed, rolling back to $PREV_TAG" >&2
+if release "$PREV_TAG"; then
+  echo "Rollback OK: running $PREV_TAG" >&2
+else
+  echo "Rollback to $PREV_TAG also failed, manual action needed" >&2
+fi
+exit 1
