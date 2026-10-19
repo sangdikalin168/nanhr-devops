@@ -1,12 +1,15 @@
 # NAN HR — Production Infrastructure (Proxmox · Docker · GitHub Actions)
 
-This repo shows how **NAN HR**, a multi-company HR & attendance system that is
-[live on the Apple App Store](https://apps.apple.com/search?term=NAN%20HR), is built, shipped and run in production on
-self-hosted infrastructure.
+A reference deployment pipeline modelled on **NAN HR**, a multi-company HR & attendance system that is
+[live on the Apple App Store](https://apps.apple.com/search?term=NAN%20HR) and self-hosted on Proxmox.
 
 > The application code of NAN HR is private. The services in `services/` are small stand-ins
 > with the same shape (Node.js API, FastAPI service, React admin) so the whole pipeline can be
 > cloned and run end to end.
+
+**Verified end to end** on a Linux Docker host with a self-hosted runner: CI, image builds, deploy and
+automatic rollback (see [Proof it works](#proof-it-works)). The Proxmox provisioning, Cloudflare Tunnel and
+S3 backup pieces are included as scripts and config.
 
 ## Architecture
 
