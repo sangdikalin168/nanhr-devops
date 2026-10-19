@@ -50,6 +50,16 @@ flowchart LR
 | Backups | Nightly `pg_dump` → gzip → AWS S3, 14-day retention | Off-site copy, independent of Proxmox |
 | Monitoring | Uptime Kuma + `/health` endpoints, Telegram alerts | Know about downtime before clients do |
 
+## Proof it works
+
+Push to `main` → tests → images to GHCR → self-hosted runner deploys:
+
+![Green CD run](docs/screenshots/pipeline.png)
+
+Healthy stack, then a deliberately broken release that rolls back on its own:
+
+![Deploy and automatic rollback](docs/screenshots/deploy-and-rollback.png)
+
 ## Repository layout
 
 ```
