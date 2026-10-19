@@ -24,7 +24,7 @@ jobs:
         with: { python-version: "3.12" }
       - run: pip install -r requirements-dev.txt
       - run: ruff check .
-      - run: pytest -q
+      - run: python -m pytest -q
 
   web:
     runs-on: ubuntu-latest
